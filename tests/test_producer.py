@@ -740,6 +740,17 @@ class TestKafkaProducerIntegration(KafkaIntegrationTestCase):
             await producer.send_and_wait(
                 self.topic, b'hello, Kafka!')
 
+    @run_until_complete
+    async def test_producer_ignore_sender_cancelations(self):
+        producer = AIOKafkaProducer(
+            bootstrap_servers=self.hosts, linger_ms=1000)
+        await producer.start()
+        self.add_cleanup(producer.stop)
+
+        producer._sender._sender_task.cancel()
+        with mock.patch.object(producer._message_accumulator, 'fail_all') as m:
+            m.assert_not_called()
+
     @kafka_versions('>=0.11.0')
     @run_until_complete
     async def test_producer_send_with_headers(self):

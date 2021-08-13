@@ -59,6 +59,9 @@ class Sender:
         """ Called when sender fails. Will fail all pending batches, as they
         will never be delivered as well as fail transaction
         """
+        if task.cancelled():
+            return
+
         if task.exception() is not None:
             self._message_accumulator.fail_all(task.exception())
             if self._txn_manager is not None:
